@@ -1,4 +1,6 @@
+from io import BytesIO
 import torch
+from urllib import request
 import pandas as pd
 import numpy as np
 import torchvision
@@ -207,7 +209,8 @@ class DeviceDataLoader:
             yield to_device(batch, self.device)
 
 def predict_new(path, model, device):
-    img = Image.open(path)
+    res = request.urlopen(path).read()
+    img = Image.open(BytesIO(res))
     test_transform = transforms.Compose([
       transforms.Resize((224,224)), 
       transforms.ToTensor(),
@@ -222,11 +225,12 @@ def predict_new(path, model, device):
     predictions = preds[0]
     max_val, kls = torch.max(predictions, dim=0)
     print('Predicted :', breeds[kls])
-    plt.imshow(img.permute(1,2,0))
-    plt.show()
+    return breeds[kls]
+    # plt.imshow(img.permute(1,2,0))
+    # plt.show()
 
 
-if __name__ == "__main__":
+def run_breed(path):
     # 모델 객체 불러온다.
     model = DogBreedPretrainedWideResnet()
 
@@ -242,4 +246,4 @@ if __name__ == "__main__":
     print(device)
 
     # 모델 예측 코드
-    predict_new('dog_test.jpg', model, device)
+    return predict_new(path, model, device)
