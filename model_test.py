@@ -1,6 +1,3 @@
-
-from flask import request, Flask, jsonify
-
 import torch
 import pandas as pd
 import numpy as np
@@ -209,7 +206,8 @@ class DeviceDataLoader:
         for batch in self.dl:
             yield to_device(batch, self.device)
 
-def predict_new(img, model, device):
+def predict_new(path, model, device):
+    img = Image.open(path)
     test_transform = transforms.Compose([
       transforms.Resize((224,224)), 
       transforms.ToTensor(),
@@ -217,31 +215,31 @@ def predict_new(img, model, device):
     ])
 
     img = test_transform(img)
+
     xb = img.unsqueeze(0)
     xb = to_device(xb, device)
     preds = model(xb)
     predictions = preds[0]
     max_val, kls = torch.max(predictions, dim=0)
     print('Predicted :', breeds[kls])
-    # plt.imshow(img.permute(1,2,0))
-    # plt.show()
-    return breeds[kls]
+    plt.imshow(img.permute(1,2,0))
+    plt.show()
 
 
-model = DogBreedPretrainedWideResnet()
-weights_fname = 'classification/dog-breed-classifier-wideresnet_with_data_aug.pth'
-# torch.save(model.state_dict(), weights_fname)
-model.load_state_dict(torch.load(weights_fname, map_location=torch.device('cpu')))
-model.eval()
+if __name__ == "__main__":
+    # 모델 객체 불러온다.
+    model = DogBreedPretrainedWideResnet()
 
-device = get_default_device()
-to_device(model, device)
+    # 학습된 모델을 불러온다.
+    weights_fname = 'dog-breed-classifier-wideresnet_with_data_aug.pth'
+    # torch.save(model.state_dict(), weights_fname)
+    model.load_state_dict(torch.load(weights_fname, map_location=torch.device('cpu')))
+    model.eval()
 
-app = Flask(__name__)
-@app.route('/inference', methods=['POST'])
-def inference():
-    data = request.json
-    numpy_data = np.array(data['images'], dtype=np.uint8)
-    img = Image.fromarray(numpy_data)
-    result = predict_new(img, model, device)
-    return str(result)
+    # 디바이스 설정
+    device = get_default_device()
+    to_device(model, device)
+    print(device)
+
+    # 모델 예측 코드
+    predict_new('dog_test.jpg', model, device)
