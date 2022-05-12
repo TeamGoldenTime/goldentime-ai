@@ -1,3 +1,18 @@
+import os
+import torch
+import pandas as pd
+import numpy as np
+import torchvision
+import torch.nn as nn
+from torch.utils.data import Dataset, random_split, DataLoader
+import torch.nn.functional as F
+from torchvision.utils import make_grid
+from torchvision.datasets import ImageFolder
+import torchvision.transforms as transforms
+from torchvision import transforms as ts
+import torchvision.models as models
+from PIL import Image
+from collections import OrderedDict
 import pinecone
 import os
 
@@ -13,46 +28,55 @@ client_version = ".".join(version_info.client.split(".")[:2])
 
 assert client_version == server_version, "Please upgrade pinecone-client."
 
-# Choosing an arbitrary name for my index: 인덱스 이름 지정
+# Choosing an arbitrary name for my index
 index_name = "simple-pytorch-dog-search"
 
-# Checking whether the index already exists.: 인덱스 존재여부확인
+# Checking whether the index already exists.
 if index_name not in pinecone.list_indexes():
-    pinecone.create_index(index_name, dimension=1000, metric="euclidean") #없으면 만들기 -> 여기서 cosine similarity 사용 가능
+    pinecone.create_index(index_name, dimension=1000, metric="euclidean") # let's try cosine similiarty
 
-index = pinecone.Index(index_name=index_name) # 인덱스 연결하기
+index = pinecone.Index(index_name=index_name) # connect the index
 
 # 일부를 인덱스에 upsert한다.
 # for batch in chunks(zip(item_df.embedding_id, item_df.embedding), 50):
 #     index.upsert(vectors=batch)
 
-# 요렇게 해주면 된다.
-index.query(query_df[:1].embedding, top_k = 2)
-    # res = index.query(batch, top_k=10)  # issuing queries #이 부분 어떤 식으로 보내줘야하지?
-    # total_res += [res.matches for res in res.results] # 이 부분으로 결과를 받아온다.
+# new image
+query_image = "pet_breed_classification/dog_pictures/dog_test.jpg"
 
+# embedder class
+class ImageEmbedder:
+    def __init__(self):
+        self.normalize = ts.Normalize(
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        )
+        # see https://pytorch.org/vision/0.8/models.html for many more model options
+        self.model = models.squeezenet1_0(pretrained=True, progress=False)  # squeezenet
 
-# from torchvision import transforms as ts
-# import torchvision.models as models
+    def embed(self, image_file_name):
+        image = Image.open(image_file_name).convert("RGB")
+        image = ts.Resize(256)(image)
+        image = ts.CenterCrop(224)(image)
+        tensor = ts.ToTensor()(image)
+        tensor = self.normalize(tensor).reshape(1, 3, 224, 224)
+        vector = self.model(tensor).cpu().detach().numpy().flatten()
+        return vector
 
+image_embedder = ImageEmbedder()
 
-# class ImageEmbedder:
-#     def __init__(self):
-#         self.normalize = ts.Normalize(
-#             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-#         )
-#         # see https://pytorch.org/vision/0.8/models.html for many more model options
-#         self.model = models.squeezenet1_0(pretrained=True, progress=False)  # squeezenet
+# extract features
+query_image_embedding = image_embedder.embed(query_image).tolist()
 
-#     def embed(self, image_file_name):
-#         image = Image.open(image_file_name).convert("RGB")
-#         image = ts.Resize(256)(image)
-#         image = ts.CenterCrop(224)(image)
-#         tensor = ts.ToTensor()(image)
-#         tensor = self.normalize(tensor).reshape(1, 3, 224, 224)
-#         vector = self.model(tensor).cpu().detach().numpy().flatten()
-#         return vector
+# search similarity image
+df = pd.DataFrame()
+df["embedding"] = [
+    query_image_embedding
+]
+result = index.query(df.embedding, top_k = 3)
+print(result)
 
+# 결과 이미지 출력을 어떻게 해결하지? 디비에 있는 이미지의 아이디와 같게 해야겠다.
+# res = index.query(batch, top_k=10)  # issuing queries #이 부분 어떤 식으로 보내줘야하지?
+# total_res += [res.matches for res in res.results] # 이 부분으로 결과를 받아온다.
 
-# image_embedder = ImageEmbedder()
 
