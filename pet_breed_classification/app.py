@@ -73,7 +73,7 @@ breeds = ['Chihuahua',
  'Lhasa',
  'flat coated retriever',
  'curly coated retriever',
- 'golden retriever',
+ '골든리트리버', # 골든리트리버
  'Labrador retriever',
  'Chesapeake Bay retriever',
  'German short haired pointer',

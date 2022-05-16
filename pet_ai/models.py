@@ -1,18 +1,18 @@
+import os
 import torch
 import pandas as pd
 import numpy as np
 import torchvision
 import torch.nn as nn
 from torch.utils.data import Dataset, random_split, DataLoader
-import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from torchvision.utils import make_grid
-from torchvision.datasets import ImageFolder
 import torchvision.transforms as transforms
+from torchvision import transforms as ts
 import torchvision.models as models
 from PIL import Image
 from collections import OrderedDict
-# %matplotlib inline
+import pinecone
 
 breeds = ['Chihuahua',
  'Japanese spaniel',
@@ -70,7 +70,7 @@ breeds = ['Chihuahua',
  'Lhasa',
  'flat coated retriever',
  'curly coated retriever',
- '골든리트리버',
+ '골든리트리버', # 골든리트리버
  'Labrador retriever',
  'Chesapeake Bay retriever',
  'German short haired pointer',
@@ -206,8 +206,7 @@ class DeviceDataLoader:
         for batch in self.dl:
             yield to_device(batch, self.device)
 
-def predict_new(path, model, device):
-    img = Image.open(path)
+def predict_new(img, model, device):
     test_transform = transforms.Compose([
       transforms.Resize((224,224)), 
       transforms.ToTensor(),
@@ -215,31 +214,31 @@ def predict_new(path, model, device):
     ])
 
     img = test_transform(img)
-
     xb = img.unsqueeze(0)
     xb = to_device(xb, device)
     preds = model(xb)
     predictions = preds[0]
     max_val, kls = torch.max(predictions, dim=0)
     print('Predicted :', breeds[kls])
-    plt.imshow(img.permute(1,2,0))
-    plt.show()
+    # plt.imshow(img.permute(1,2,0))
+    # plt.show()
+    return breeds[kls]
 
 
-if __name__ == "__main__":
-    # 모델 객체 불러온다.
-    model = DogBreedPretrainedWideResnet()
+# embedder class
+class ImageEmbedder:
+    def __init__(self):
+        self.normalize = ts.Normalize(
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        )
+        # see https://pytorch.org/vision/0.8/models.html for many more model options
+        self.model = models.squeezenet1_0(pretrained=True, progress=False)  # squeezenet
 
-    # 학습된 모델을 불러온다.
-    weights_fname = 'pet_breed_classification/classification/dog-breed-classifier-wideresnet_with_data_aug.pth'
-    # torch.save(model.state_dict(), weights_fname)
-    model.load_state_dict(torch.load(weights_fname, map_location=torch.device('cpu')))
-    model.eval()
-
-    # 디바이스 설정
-    device = get_default_device()
-    to_device(model, device)
-    print(device)
-
-    # 모델 예측 코드
-    predict_new('pet_breed_classification/dog_pictures/dog_test.jpg', model, device)
+    def embed(self, image):
+        # image = Image.open(image_file_name).convert("RGB")
+        image = ts.Resize(256)(image)
+        image = ts.CenterCrop(224)(image)
+        tensor = ts.ToTensor()(image)
+        tensor = self.normalize(tensor).reshape(1, 3, 224, 224)
+        vector = self.model(tensor).cpu().detach().numpy().flatten()
+        return vector

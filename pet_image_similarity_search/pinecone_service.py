@@ -42,7 +42,7 @@ index = pinecone.Index(index_name=index_name) # connect the index
 #     index.upsert(vectors=batch)
 
 # new image
-query_image = "pet_breed_classification/dog_pictures/dog_test.jpg"
+query_image_path = "pet_breed_classification/dog_pictures/cocker_spaniel.jpeg"
 
 # embedder class
 class ImageEmbedder:
@@ -53,8 +53,8 @@ class ImageEmbedder:
         # see https://pytorch.org/vision/0.8/models.html for many more model options
         self.model = models.squeezenet1_0(pretrained=True, progress=False)  # squeezenet
 
-    def embed(self, image_file_name):
-        image = Image.open(image_file_name).convert("RGB")
+    def embed(self, image):
+        # query_image = Image.open(query_image_path).convert("RGB")
         image = ts.Resize(256)(image)
         image = ts.CenterCrop(224)(image)
         tensor = ts.ToTensor()(image)
@@ -65,6 +65,7 @@ class ImageEmbedder:
 image_embedder = ImageEmbedder()
 
 # extract features
+query_image = Image.open(query_image_path).convert("RGB")
 query_image_embedding = image_embedder.embed(query_image).tolist()
 
 # search similarity image
@@ -72,7 +73,7 @@ df = pd.DataFrame()
 df["embedding"] = [
     query_image_embedding
 ]
-result = index.query(df.embedding, top_k = 3)
+result = index.query(df.embedding, top_k = 5)
 print(result)
 
 # 결과 이미지 출력을 어떻게 해결하지? 디비에 있는 이미지의 아이디와 같게 해야겠다.

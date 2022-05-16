@@ -1,3 +1,4 @@
 pet_breed_classification/classification/dog-breed-classifier-wideresnet_with_data_aug.pth
+pet_ai/models/dog-breed-classifier-wideresnet_with_data_aug.pth
 .DS_Store
 .tar
