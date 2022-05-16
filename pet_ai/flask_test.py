@@ -3,7 +3,7 @@ import requests
 import numpy as np
 from PIL import Image
 
-image = Image.open("pet_ai/pet_test_pictures/cocker_spaniel.jpeg")
+image = Image.open("pet_ai/pet_test_pictures/Shih-Tzu.jpeg")
 pixels = np.array(image)
 
 headers = {'Content-Type':'application/json'}

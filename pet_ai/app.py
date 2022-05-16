@@ -46,11 +46,11 @@ assert client_version == server_version, "Please upgrade pinecone-client."
 
 # Choosing an arbitrary name for my index
 # index_name = "simple-pytorch-dog-search"
-index_name = "simple-pytorch-dog-search-resnet-cosine"
+index_name = "simple-pytorch-dog-search"
 
 # Checking whether the index already exists.
 if index_name not in pinecone.list_indexes():
-    pinecone.create_index(index_name, dimension=512, metric="cosine") # let's try cosine similiarty
+    pinecone.create_index(index_name, dimension=1000, metric="euclidean") # let's try cosine similiarty
 
 index = pinecone.Index(index_name=index_name) # connect the index
 image_embedder = models.ImageEmbedder()
@@ -65,6 +65,8 @@ def inference():
     result = models.predict_new(img, model, device)
     return str(result)
 
+
+# 성능이 안좋아지는게 아니고 백엔드에 없는 이미지를 인풋으로 넣어줘서 성능이 떨어진거였다 아놔 --..
 @app.route('/image_similarity_inference', methods=['POST'])
 def image_similarity_inference():
     query_data = request.json
@@ -79,7 +81,7 @@ def image_similarity_inference():
     df["embedding"] = [
         query_image_embedding
     ]
-    result = index.query(df.embedding, top_k = 3)
+    result = index.query(df.embedding, top_k = 10)
     print(result)
 
     return str(result)
