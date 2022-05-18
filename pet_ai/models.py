@@ -218,11 +218,11 @@ def predict_new(img, model, device):
     xb = to_device(xb, device)
     preds = model(xb)
     predictions = preds[0]
-    max_val, kls = torch.max(predictions, dim=0)
-    print('Predicted :', breeds[kls])
+    max_val, kls = torch.topk(predictions, k=3, dim= 0) #torch.max(predictions, dim=0) 
+    print('Predicted :', breeds[kls[0]],',',breeds[kls[1]],',',breeds[kls[2]])
     # plt.imshow(img.permute(1,2,0))
     # plt.show()
-    return breeds[kls]
+    return breeds[kls[0]], breeds[kls[1]], breeds[kls[2]]
 
 
 # embedder class

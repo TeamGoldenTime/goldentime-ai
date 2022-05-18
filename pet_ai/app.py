@@ -15,6 +15,8 @@ import torchvision.models as models
 from PIL import Image
 from collections import OrderedDict
 import pinecone
+from urllib import request as url_request
+from io import BytesIO
 
 import models
 
@@ -46,7 +48,7 @@ assert client_version == server_version, "Please upgrade pinecone-client."
 
 # Choosing an arbitrary name for my index
 # index_name = "simple-pytorch-dog-search"
-index_name = "simple-pytorch-dog-search"
+index_name = "simple-pytorch-image-search"
 
 # Checking whether the index already exists.
 if index_name not in pinecone.list_indexes():
@@ -60,8 +62,11 @@ image_embedder = models.ImageEmbedder()
 @app.route('/inference', methods=['POST'])
 def inference():
     data = request.json
-    numpy_data = np.array(data['images'], dtype=np.uint8)
-    img = Image.fromarray(numpy_data)
+    path = data['path']
+    res = url_request.urlopen(path).read()
+    img = Image.open(BytesIO(res))
+    # numpy_data = np.array(data['images'], dtype=np.uint8)
+    # img = Image.fromarray(numpy_data)
     result = models.predict_new(img, model, device)
     return str(result)
 
@@ -70,9 +75,11 @@ def inference():
 @app.route('/image_similarity_inference', methods=['POST'])
 def image_similarity_inference():
     query_data = request.json
-    query_numpy_data = np.array(query_data['images'], dtype=np.uint8)
-    query_image = Image.fromarray(query_numpy_data).convert("RGB")
-
+    path = query_data['path']
+    # query_numpy_data = np.array(query_data['images'], dtype=np.uint8)
+    # query_image = Image.fromarray(query_numpy_data).convert("RGB")
+    res = url_request.urlopen(path).read()
+    query_image = Image.open(BytesIO(res)).convert("RGB")
     # extract features
     query_image_embedding = image_embedder.embed(query_image).tolist()
 
@@ -85,3 +92,7 @@ def image_similarity_inference():
     print(result)
 
     return str(result)
+
+    # path = "https://www.animal.go.kr/front/fileMng/imageView.do;jsessionid=Cx3VGauMMb8y3UTX38E1XLjeXVVePpvT1nF7jeQLiaVNcCtk7B5gpiUAGFfOaX1S.aniwas2_servlet_front?f=/files/loss/2022/05/20220510102404490_s.jpg"
+    # res = request.urlopen(path).read()
+    # img = Image.open(BytesIO(res))
