@@ -16,7 +16,7 @@ import pinecone
 
 breeds = ['Chihuahua',
  'Japanese spaniel',
- 'Maltese dog',
+ '말티즈',
  'Pekinese',
  'Shih Tzu',
  'Blenheim spaniel',
