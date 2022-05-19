@@ -68,7 +68,7 @@ def inference():
     # numpy_data = np.array(data['images'], dtype=np.uint8)
     # img = Image.fromarray(numpy_data)
     result = models.predict_new(img, model, device)
-    return str(result)
+    return jsonify(breed = result[0])
 
 
 # 성능이 안좋아지는게 아니고 백엔드에 없는 이미지를 인풋으로 넣어줘서 성능이 떨어진거였다 아놔 --..
@@ -96,3 +96,6 @@ def image_similarity_inference():
     # path = "https://www.animal.go.kr/front/fileMng/imageView.do;jsessionid=Cx3VGauMMb8y3UTX38E1XLjeXVVePpvT1nF7jeQLiaVNcCtk7B5gpiUAGFfOaX1S.aniwas2_servlet_front?f=/files/loss/2022/05/20220510102404490_s.jpg"
     # res = request.urlopen(path).read()
     # img = Image.open(BytesIO(res))
+    
+if __name__ == '__main__':
+    app.run(debug=True)
