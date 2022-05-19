@@ -89,9 +89,13 @@ def image_similarity_inference():
         query_image_embedding
     ]
     result = index.query(df.embedding, top_k = 10)
-    print(result)
+    data = []
+    for obj in result.results[0].matches :
+        data.append({"id" : obj.id, "score" : obj.score});
+        
+    print(data)
+    return jsonify(data)
 
-    return str(result)
 
     # path = "https://www.animal.go.kr/front/fileMng/imageView.do;jsessionid=Cx3VGauMMb8y3UTX38E1XLjeXVVePpvT1nF7jeQLiaVNcCtk7B5gpiUAGFfOaX1S.aniwas2_servlet_front?f=/files/loss/2022/05/20220510102404490_s.jpg"
     # res = request.urlopen(path).read()
