@@ -148,7 +148,7 @@ def fingerprint_pipline(input_img, file):
 
     # orientations
 	angles = orientation.calculate_angles(normalized_img, W=block_size, smoth=False)
-	orientation_img = orientation.visualize_angles(segmented_img, mask, angles, W=block_size)
+	# orientation_img = orientation.visualize_angles(segmented_img, mask, angles, W=block_size)
 
     # find the overall frequency of ridges in Wavelet Domain
 	freq = ridge_freq(normim, mask, angles, block_size, kernel_size=5, minWaveLength=5, maxWaveLength=15)

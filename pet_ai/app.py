@@ -100,6 +100,40 @@ def image_similarity_inference():
     # path = "https://www.animal.go.kr/front/fileMng/imageView.do;jsessionid=Cx3VGauMMb8y3UTX38E1XLjeXVVePpvT1nF7jeQLiaVNcCtk7B5gpiUAGFfOaX1S.aniwas2_servlet_front?f=/files/loss/2022/05/20220510102404490_s.jpg"
     # res = request.urlopen(path).read()
     # img = Image.open(BytesIO(res))
+
+@app.route('/image_similarity_update', methods=['PUT'])
+def image_similarity_update():
+    query_data = request.json
+    path = query_data['path']
+    # query_numpy_data = np.array(query_data['images'], dtype=np.uint8)
+    # query_image = Image.fromarray(query_numpy_data).convert("RGB")
+    res = url_request.urlopen(path).read()
+    query_image = Image.open(BytesIO(res)).convert("RGB")
+    # extract features
+    query_image_embedding = image_embedder.embed(query_image).tolist()
+
+    import itertools
+    def chunks(iterable, batch_size=1):
+        it = iter(iterable)
+        chunk = tuple(itertools.islice(it, batch_size))
+        while chunk:
+            yield chunk
+            chunk = tuple(itertools.islice(it, batch_size))
+
+    # # search similarity image
+    df = pd.DataFrame()
+    df["embedding"] = [
+        query_image_embedding
+    ]
+    df["embedding_id"] = [
+        path
+    ]
+    # index.upsert(id = path, vectors = query_image_embedding)
+
+    for batch in chunks(zip(df.embedding_id, df.embedding), 1):
+        index.upsert(vectors=batch)
+
+    return jsonify({"message":"update data successfully"})
     
 if __name__ == '__main__':
     app.run(debug=True)
