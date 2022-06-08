@@ -224,6 +224,12 @@ def predict_new(img, model, device):
     # plt.show()
     return breeds[kls[0]], breeds[kls[1]], breeds[kls[2]]
 
+import torch
+random_seed = 20
+torch.manual_seed(random_seed)
+np.random.seed(random_seed)
+import random
+random.seed(random_seed)
 
 # embedder class
 class ImageEmbedder:
@@ -233,6 +239,7 @@ class ImageEmbedder:
         )
         # see https://pytorch.org/vision/0.8/models.html for many more model options
         self.model = models.squeezenet1_0(pretrained=True, progress=False)  # squeezenet
+        self.model.eval()
 
     def embed(self, image):
         # image = Image.open(image_file_name).convert("RGB")

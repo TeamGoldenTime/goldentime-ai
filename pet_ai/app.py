@@ -91,7 +91,7 @@ def image_similarity_inference():
     result = index.query(df.embedding, top_k = 10)
     data = []
     for obj in result.results[0].matches :
-        data.append({"id" : obj.id, "score" : obj.score});
+        data.append({"id" : obj.id, "score" : obj.score})
         
     print(data)
     return jsonify(data)
