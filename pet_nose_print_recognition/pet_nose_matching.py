@@ -19,8 +19,9 @@ img1=cv.drawKeypoints(input_img,kp,input_img)
 flag=0
 
 os.chdir("./")
+print("dog nose print 인식을 시작합니다.")
+print("---------------------------------------------------------")
 for file in glob.glob("pet_nose_print_recognition/output/*.tif"):
-    print(file)
     frame=cv.imread(file)
     frame=frame.astype('uint8')
     gray1 = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
@@ -41,7 +42,7 @@ for file in glob.glob("pet_nose_print_recognition/output/*.tif"):
         if m.distance < 0.7*n.distance:
             good.append(m)
     score = calculateScore(len(matches),len(des1),len(des2))
-    if len(good) > 90 and score < 200:
+    if len(good) >= 70 and score < 200:
         # score = calculateScore(len(matches),len(des1),len(des2))
         # src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
         # dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
@@ -53,6 +54,8 @@ for file in glob.glob("pet_nose_print_recognition/output/*.tif"):
         # print(score)
         
         flag=1
+    else:
+        print("Non - Matched "+str(file))
     # else:
     #     matchesMask = None
 
@@ -69,3 +72,5 @@ for file in glob.glob("pet_nose_print_recognition/output/*.tif"):
 
 if flag==0:
     print("No Matches among the given set!!")
+
+print("---------------------------------------------------------")
